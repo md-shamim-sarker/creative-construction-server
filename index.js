@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const {MongoClient, ServerApiVersion} = require('mongodb');
+const {MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 require('dotenv').config();
 
 const app = express();
@@ -10,8 +10,8 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(cors());
 
-// const uri = process.env.DB_URI;
-const uri = "mongodb://localhost:27017";
+const uri = process.env.DB_URI;
+// const uri = "mongodb://localhost:27017";
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -25,11 +25,38 @@ async function run() {
         await client.connect();
         console.log("Database connect successfully.");
 
+        // Get API For 3 Services
+        app.get("/services3", async (req, res) => {
+            const query = {};
+            const cursor = servicesCollection.find(query);
+            const services = await cursor.limit(3).toArray();
+            res.send(services);
+        });
+
+        // Get API For ALL Services
         app.get("/services", async (req, res) => {
             const query = {};
             const cursor = servicesCollection.find(query);
             const services = await cursor.toArray();
             res.send(services);
+        });
+
+        // Get API for Service by id
+        app.get("/service/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: ObjectId(id)
+            };
+            const service = await servicesCollection.findOne(query);
+            res.send(service);
+        });
+
+        // Add Service API
+        app.post("/services", async (req, res) => {
+            const service = req.body;
+            const result = await servicesCollection.insertOne(service);
+            res.send(result);
+            console.log('Data added successfully...');
         });
 
     } catch(error) {
