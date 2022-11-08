@@ -21,6 +21,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         const servicesCollection = client.db("creative-construction").collection("services");
+        const reviewsCollection = client.db("creative-construction").collection("reviews");
 
         await client.connect();
         console.log("Database connect successfully.");
@@ -57,6 +58,14 @@ async function run() {
         app.post("/services", async (req, res) => {
             const service = req.body;
             const result = await servicesCollection.insertOne(service);
+            res.send(result);
+            console.log('Data added successfully...');
+        });
+
+        // Add Review API
+        app.post("/reviews", async (req, res) => {
+            const review = req.body;
+            const result = await reviewsCollection.insertOne(review);
             res.send(result);
             console.log('Data added successfully...');
         });
