@@ -10,8 +10,8 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(cors());
 
-const uri = process.env.DB_URI;
-// const uri = "mongodb://localhost:27017";
+// const uri = process.env.DB_URI;
+const uri = "mongodb://localhost:27017";
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -28,15 +28,17 @@ async function run() {
         // Get API For 3 Services
         app.get("/services3", async (req, res) => {
             const query = {};
-            const cursor = servicesCollection.find(query);
-            const services = await cursor.limit(3).toArray();
+            const sort = {_id: -1};
+            const cursor = servicesCollection.find(query).sort(sort).limit(3);
+            const services = await cursor.toArray();
             res.send(services);
         });
 
         // Get API For ALL Services
         app.get("/services", async (req, res) => {
             const query = {};
-            const cursor = servicesCollection.find(query);
+            const sort = {_id: -1};
+            const cursor = servicesCollection.find(query).sort(sort);
             const services = await cursor.toArray();
             res.send(services);
         });
