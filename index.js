@@ -10,8 +10,8 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(cors());
 
-// const uri = process.env.DB_URI;
-const uri = "mongodb://localhost:27017";
+const uri = process.env.DB_URI;
+// const uri = "mongodb://localhost:27017";
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
