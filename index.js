@@ -45,7 +45,7 @@ async function run() {
         });
 
         // Get API for Service by id
-        app.get("/service/:id", async (req, res) => {
+        app.get("/services/:id", async (req, res) => {
             const id = req.params.id;
             const query = {
                 _id: ObjectId(id)
@@ -69,6 +69,74 @@ async function run() {
             res.send(result);
             console.log('Data added successfully...');
         });
+
+        // Get API For ALL Reviews
+        app.get("/reviews", async (req, res) => {
+            const query = {};
+            const sort = {reviewTime: -1};
+            const cursor = reviewsCollection.find(query).sort(sort);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+        // Get API for Review by id
+        app.get("/reviews/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: ObjectId(id)
+            };
+            const reviews = await reviewsCollection.findOne(query);
+            res.send(reviews);
+        });
+
+        // Get API for Reviews by serviceId (using query parameters)
+        // http://localhost:5000/reviews?serviceId=636a8934061af35c109689ef (query parameter format)
+        /* app.get('/reviews', async (req, res) => {
+            let query = {};
+            if(req.query.serviceId) {
+                query = {
+                    serviceId: req.query.serviceId
+                };
+            }
+            const sort = {reviewTime: -1};
+            const cursor = reviewsCollection.find(query).sort(sort);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        }); */
+
+        app.get('/reviews/services/:id', async (req, res) => {
+            const id = req.params.id;
+            let query = {serviceId: id};
+            const sort = {reviewTime: -1};
+            const cursor = reviewsCollection.find(query).sort(sort);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+        // Get API for Reviews by emailId (using query parameters)
+        // http://localhost:5000/reviews?email=shamim1@gmail.com (query parameter format)
+        /* app.get('/reviews', async (req, res) => {
+            let query = {};
+            if(req.query.email) {
+                query = {
+                    email: req.query.email
+                };
+            }
+            const cursor = reviewsCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        }); */
+
+        app.get('/reviews/services/email/:email', async (req, res) => {
+            const email = req.params.email;
+            let query = {email: email};
+            const sort = {reviewTime: -1};
+            const cursor = reviewsCollection.find(query).sort(sort);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+
 
     } catch(error) {
         console.error(error.message);
