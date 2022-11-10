@@ -5,13 +5,13 @@ const {MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 5000;
 
 // middleware
 app.use(express.json());
 app.use(cors());
 
-const uri = process.env.DB_URI;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.egsefuu.mongodb.net/?retryWrites=true&w=majority`;
 // const uri = "mongodb://localhost:27017";
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
@@ -40,13 +40,11 @@ async function run() {
         const servicesCollection = client.db("creative-construction").collection("services");
         const reviewsCollection = client.db("creative-construction").collection("reviews");
 
-        await client.connect();
-        console.log("Database connect successfully.");
         // JWT Token API
         app.post('/jwt', (req, res) => {
             const user = req.body;
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-                expiresIn: '1h'
+                expiresIn: '5h'
             });
             res.send({token});
         });
@@ -117,7 +115,8 @@ async function run() {
         app.get('/reviews/services/:id', async (req, res) => {
             const id = req.params.id;
             let query = {serviceId: id};
-            const sort = {reviewTime: -1};
+            // const sort = {reviewTime: -1};
+            const sort = {_id: -1};
             const cursor = reviewsCollection.find(query).sort(sort);
             const reviews = await cursor.toArray();
             res.send(reviews);
@@ -132,7 +131,8 @@ async function run() {
             }
 
             let query = {email: email};
-            const sort = {reviewTime: -1};
+            // const sort = {reviewTime: -1};
+            const sort = {_id: -1};
             const cursor = reviewsCollection.find(query).sort(sort);
             const reviews = await cursor.toArray();
             res.send(reviews);
