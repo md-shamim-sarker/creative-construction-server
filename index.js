@@ -11,29 +11,29 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cors());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.egsefuu.mongodb.net/?retryWrites=true&w=majority`;
-// const uri = "mongodb://localhost:27017";
-const client = new MongoClient(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
-});
-
-// verifyJWT
+// verifyJWT (middleware)
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if(!authHeader) {
-        return res.send({message: 'Unauthorized Access'});
+        return res.status(401).send({message: 'Unauthorized Access'});
     }
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded) {
         if(err) {
-            return res.send({message: 'Unauthorized Access'});
+            return res.status(401).send({message: 'Unauthorized Access'});
         }
         req.decoded = decoded;
         next();
     });
 }
+
+// mongodb database uri and client
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.egsefuu.mongodb.net/?retryWrites=true&w=majority`;
+const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1
+});
 
 async function run() {
     try {
@@ -93,15 +93,6 @@ async function run() {
             console.log('Data added successfully...');
         });
 
-        // Get API For ALL Reviews (Have to delete************)
-        app.get("/reviews", async (req, res) => {
-            const query = {};
-            const sort = {reviewTime: -1};
-            const cursor = reviewsCollection.find(query).sort(sort);
-            const reviews = await cursor.toArray();
-            res.send(reviews);
-        });
-
         // Get API for Review by id
         app.get("/reviews/:id", async (req, res) => {
             const id = req.params.id;
@@ -115,7 +106,6 @@ async function run() {
         app.get('/reviews/services/:id', async (req, res) => {
             const id = req.params.id;
             let query = {serviceId: id};
-            // const sort = {reviewTime: -1};
             const sort = {_id: -1};
             const cursor = reviewsCollection.find(query).sort(sort);
             const reviews = await cursor.toArray();
@@ -127,11 +117,10 @@ async function run() {
             const decoded = req.decoded;
             const email = req.params.email;
             if(decoded.email !== email) {
-                res.send({message: 'Unauthorized Access'});
+                res.status(401).send({message: 'Unauthorized Access'});
             }
 
             let query = {email: email};
-            // const sort = {reviewTime: -1};
             const sort = {_id: -1};
             const cursor = reviewsCollection.find(query).sort(sort);
             const reviews = await cursor.toArray();
