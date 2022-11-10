@@ -26,7 +26,6 @@ function verifyJWT(req, res, next) {
         return res.send({message: 'Unauthorized Access'});
     }
     const token = authHeader.split(' ')[1];
-    // console.log('Shamim', token);
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded) {
         if(err) {
             return res.send({message: 'Unauthorized Access'});
@@ -43,15 +42,12 @@ async function run() {
 
         await client.connect();
         console.log("Database connect successfully.");
-
         // JWT Token API
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            // console.log(user);
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
                 expiresIn: '1h'
             });
-            // console.log({token});
             res.send({token});
         });
 
@@ -127,12 +123,9 @@ async function run() {
             res.send(reviews);
         });
 
-        // Need to jwt verify *******************************
         app.get('/reviews/services/email/:email', verifyJWT, async (req, res) => {
 
-            // check jwt
             const decoded = req.decoded;
-            console.log('my-reviews api', decoded);
             const email = req.params.email;
             if(decoded.email !== email) {
                 res.send({message: 'Unauthorized Access'});
