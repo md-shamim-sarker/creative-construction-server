@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const {MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 require('dotenv').config();
 
@@ -10,13 +11,30 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(cors());
 
-const uri = process.env.DB_URI;
-// const uri = "mongodb://localhost:27017";
+// const uri = process.env.DB_URI;
+const uri = "mongodb://localhost:27017";
 const client = new MongoClient(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1
 });
+
+// verifyJWT
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if(!authHeader) {
+        return res.send({message: 'Unauthorized Access'});
+    }
+    const token = authHeader.split(' ')[1];
+    // console.log('Shamim', token);
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded) {
+        if(err) {
+            return res.send({message: 'Unauthorized Access'});
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
 
 async function run() {
     try {
@@ -25,6 +43,17 @@ async function run() {
 
         await client.connect();
         console.log("Database connect successfully.");
+
+        // JWT Token API
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            // console.log(user);
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '1h'
+            });
+            // console.log({token});
+            res.send({token});
+        });
 
         // Get API For 3 Services
         app.get("/services3", async (req, res) => {
@@ -89,21 +118,6 @@ async function run() {
             res.send(reviews);
         });
 
-        // Get API for Reviews by serviceId (using query parameters)
-        // http://localhost:5000/reviews?serviceId=636a8934061af35c109689ef (query parameter format)
-        /* app.get('/reviews', async (req, res) => {
-            let query = {};
-            if(req.query.serviceId) {
-                query = {
-                    serviceId: req.query.serviceId
-                };
-            }
-            const sort = {reviewTime: -1};
-            const cursor = reviewsCollection.find(query).sort(sort);
-            const reviews = await cursor.toArray();
-            res.send(reviews);
-        }); */
-
         app.get('/reviews/services/:id', async (req, res) => {
             const id = req.params.id;
             let query = {serviceId: id};
@@ -113,22 +127,17 @@ async function run() {
             res.send(reviews);
         });
 
-        // Get API for Reviews by emailId (using query parameters)
-        // http://localhost:5000/reviews?email=shamim1@gmail.com (query parameter format)
-        /* app.get('/reviews', async (req, res) => {
-            let query = {};
-            if(req.query.email) {
-                query = {
-                    email: req.query.email
-                };
-            }
-            const cursor = reviewsCollection.find(query);
-            const reviews = await cursor.toArray();
-            res.send(reviews);
-        }); */
+        // Need to jwt verify *******************************
+        app.get('/reviews/services/email/:email', verifyJWT, async (req, res) => {
 
-        app.get('/reviews/services/email/:email', async (req, res) => {
+            // check jwt
+            const decoded = req.decoded;
+            console.log('my-reviews api', decoded);
             const email = req.params.email;
+            if(decoded.email !== email) {
+                res.send({message: 'Unauthorized Access'});
+            }
+
             let query = {email: email};
             const sort = {reviewTime: -1};
             const cursor = reviewsCollection.find(query).sort(sort);
